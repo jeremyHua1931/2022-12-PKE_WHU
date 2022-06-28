@@ -17,9 +17,9 @@ static void handle_syscall(trapframe *tf) {
   // for a syscall, we should return to the NEXT instruction after its handling.
   // in RV64G, each instruction occupies exactly 32 bits (i.e., 4 Bytes)
   tf->epc += 4;
-  //TODO: lab1-1 第二个思考题: 下一条指令, 栈+4
+  //TODOSolve: lab1-1 第二个思考题: 下一条指令, 栈+4
 
-  // TODO (lab1_1): remove the panic call below, and call do_syscall (defined in
+  // TODOSolve (lab1_1): remove the panic call below, and call do_syscall (defined in
   // kernel/syscall.c) to conduct real operations of the kernel side for a syscall.
   // IMPORTANT: return value should be returned to user app, or else, you will encounter
   // problems in later experiments!

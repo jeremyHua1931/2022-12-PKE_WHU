@@ -52,6 +52,7 @@ void init_dtb(uint64 dtb) {
 // delegate (almost all) interrupts and most exceptions to S-mode.
 // after delegation, syscalls will handled by the PKE OS kernel running in S-mode.
 //
+//部分异常代理给S模式
 static void delegate_traps() {
   // supports_extension macro is defined in kernel/riscv.h
   if (!supports_extension('S')) {
@@ -59,6 +60,7 @@ static void delegate_traps() {
     sprint("S mode is not supported.\n");
     return;
   }
+  //未发现CAUSE_ILLEGAL_INSTRUCTION, 说明代理给M模型==>M的trap入口
 
   // macros used in following two statements are defined in kernel/riscv.h
   uintptr_t interrupts = MIP_SSIP | MIP_STIP | MIP_SEIP;
