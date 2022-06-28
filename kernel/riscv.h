@@ -135,7 +135,7 @@ static inline uint64 read_tp(void) {
 // write tp, the thread pointer, holding hartid (core number), the index into cpus[].
 static inline void write_tp(uint64 x) { asm volatile("mv tp, %0" : : "r"(x)); }
 
-typedef struct riscv_regs_t {
+typedef struct riscv_regs {
   /*  0  */ uint64 ra;
   /*  8  */ uint64 sp;
   /*  16 */ uint64 gp;
