@@ -28,23 +28,22 @@ static void handle_timer() {
 // handle_mtrap calls a handling function according to the type of a machine mode interrupt (trap).
 //
 void handle_mtrap() {
-  uint64 mcause = read_csr(mcause);
-  switch (mcause) {
-    case CAUSE_MTIMER:
-      handle_timer();
-      break;
-    case CAUSE_FETCH_ACCESS:
-      handle_instruction_access_fault();
-      break;
-    case CAUSE_LOAD_ACCESS:
-      handle_load_access_fault();
-    case CAUSE_STORE_ACCESS:
-      handle_store_access_fault();
-      break;
-    case CAUSE_ILLEGAL_INSTRUCTION:
-      // TODO (lab1_2): call handle_illegal_instruction to implement illegal instruction
-      // interception, and finish lab1_2.
-      panic( "call handle_illegal_instruction to accomplish illegal instruction interception for lab1_2.\n" );
+    uint64 mcause = read_csr(mcause);
+    switch (mcause) {
+        case CAUSE_FETCH_ACCESS:
+            handle_instruction_access_fault();
+            break;
+        case CAUSE_LOAD_ACCESS:
+            handle_load_access_fault();
+        case CAUSE_STORE_ACCESS:
+            handle_store_access_fault();
+            break;
+        case CAUSE_ILLEGAL_INSTRUCTION:
+            // TODO (lab1_2): call handle_illegal_instruction to implement illegal instruction
+            // interception, and finish lab1_2.
+//      panic( "call handle_illegal_instruction to accomplish illegal instruction interception for lab1_2.\n" );
+//增加调用即可
+            handle_illegal_instruction();
 
       break;
     case CAUSE_MISALIGNED_LOAD:
