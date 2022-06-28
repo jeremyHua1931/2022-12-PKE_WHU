@@ -13,31 +13,29 @@ trap_sec_start:
 # smode_trap_vector. It is done by reture_to_user function (defined below) when
 # scheduling a user-mode application to run.
 #
+
+
 .globl smode_trap_vector
 .align 4
 smode_trap_vector:
     # swap a0 and sscratch, so that points a0 to the trapframe of current process
     csrrw a0, sscratch, a0
 
-    # save the context (user registers) of current process in its trapframe.
+    # save the context (user registers) of current process in its trapframe. 1-进程现场进行保存
     addi t6, a0 , 0
-
-    # store_all_registers is a macro defined in util/load_store.S, it stores contents
-    # of all general purpose registers into a piece of memory started from [t6].
     store_all_registers
 
-    # come back to save a0 register before entering trap handling in trapframe
-    # [t0]=[sscratch]
+    # come back to save a0 register before entering trap handling in trapframe  2-a0寄存器中的系统调用号保存到内核堆栈
     csrr t0, sscratch
     sd t0, 72(a0)
 
-    # use the "user kernel" stack (whose pointer stored in p->trapframe->kernel_sp)
+    # use the "user kernel" stack (whose pointer stored in p->trapframe->kernel_sp) 3- p->trapframe->kernel_sp指向的为应用进程分配的内核栈设置到sp寄存器, 完成栈的切换 ;sp寄存器是栈顶指针
     ld sp, 248(a0)
 
     # load the address of smode_trap_handler() from p->trapframe->kernel_trap
     ld t0, 256(a0)
 
-    # jump to smode_trap_handler() that is defined in kernel/trap.c
+    # jump to smode_trap_handler() that is defined in kernel/trap.c 4-跳转 smode_trap_handler()
     jr t0
 
 #
@@ -48,16 +46,15 @@ smode_trap_vector:
 #
 .globl return_to_user
 return_to_user:
-    # [sscratch]=[a0], save a0 in sscratch, so sscratch points to a trapframe now.
+    # save a0 in sscratch, so sscratch points to a trapframe now.
     csrw sscratch, a0
 
     # let [t6]=[a0]
     addi t6, a0, 0
 
-    # restore_all_registers is a assembly macro defined in util/load_store.S.
-    # the macro restores all registers from trapframe started from [t6] to all general
-    # purpose registers, so as to resort the execution of a process.
-    restore_all_registers 
+    # restore all registers from trapframe, so as to resort the execution of a process
+    restore_all_registers
 
     # return to user mode and user pc.
     sret
+
