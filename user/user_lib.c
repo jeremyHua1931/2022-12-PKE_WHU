@@ -48,7 +48,7 @@ int printu(const char* s, ...) {
   size_t n = res < sizeof(out) ? res : sizeof(out);
 
   // make a syscall to implement the required functionality.
-  //TODO: lab1-1 第三个思考题 字符串首地址存在了buf, buf即 a1中将存的值
+  //TODOSolve: lab1-1 第三个思考题 字符串首地址存在了buf, buf即 a1中将存的值
   return do_user_call(SYS_user_print, (uint64)buf, n, 0, 0, 0, 0, 0);
   //==执行do_user_call, 跳转
 }
