@@ -30,7 +30,7 @@ mtrapvec:
     # pointing mscratch back to g_itrframe
     csrw mscratch, a0
 
-    # call machine mode trap handling function #此处进行处理异常, kernel/machine/mtrap.c
+    # call machine mode trap handling function #此处进行处理异常, kernel/machine/mtrap.c lab1-3同样进入此处
     call handle_mtrap
 
     # restore all registers, come back to the status before entering

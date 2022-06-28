@@ -80,12 +80,13 @@ static void delegate_traps() {
 
 //
 // enabling timer interrupt (irq) in Machine mode. added @lab1_3
-//
+//设置了下一次触发的时间
 void timerinit(uintptr_t hartid) {
   // fire timer irq after TIMER_INTERVAL from now.
   *(uint64*)CLINT_MTIMECMP(hartid) = *(uint64*)CLINT_MTIME + TIMER_INTERVAL;
 
-  // enable machine-mode timer irq in MIE (Machine Interrupt Enable) csr.
+  // enable machine-mode timer irq in MIE (Machine Interrupt Enable) csr. 寄存器中的MIE_MTIE位，即允许我们的 (模拟) RISC-V机器在M模式处理timer中断。
+  //时钟中断触发后，kernel/machine/mtrap_vector.S文件中的mtrapvec函数将被调用, 跟lab1-2一样,一起进入  kernel/machine/mtrap.c
   write_csr(mie, read_csr(mie) | MIE_MTIE);
 }
 

@@ -16,12 +16,13 @@ static void handle_misaligned_store() { panic("Misaligned AMO!"); }
 
 // added @lab1_3
 static void handle_timer() {
-  int cpuid = 0;
-  // setup the timer fired at next time (TIMER_INTERVAL from now)
-  *(uint64*)CLINT_MTIMECMP(cpuid) = *(uint64*)CLINT_MTIMECMP(cpuid) + TIMER_INTERVAL;
+    int cpuid = 0;
+    // setup the timer fired at next time (TIMER_INTERVAL from now) 下一次触发的时间
+    *(uint64 *) CLINT_MTIMECMP(cpuid) = *(uint64 *) CLINT_MTIMECMP(cpuid) + TIMER_INTERVAL;
 
-  // setup a soft interrupt in sip (S-mode Interrupt Pending) to be handled in S-mode
-  write_csr(sip, SIP_SSIP);
+    // setup a soft interrupt in sip (S-mode Interrupt Pending) to be handled in S-mode
+    //PKE操作系统内核在S模式收到一个来自M态的时钟中断请求 (CAUSE_MTIMER_S_TRAP)
+    write_csr(sip, SIP_SSIP);
 }
 
 //
@@ -30,6 +31,9 @@ static void handle_timer() {
 void handle_mtrap() {
     uint64 mcause = read_csr(mcause);
     switch (mcause) {
+        case CAUSE_MTIMER:
+            handle_timer(); //判断是时钟中断 handle_timer()
+            break;
         case CAUSE_FETCH_ACCESS:
             handle_instruction_access_fault();
             break;
@@ -45,18 +49,18 @@ void handle_mtrap() {
 //增加调用即可
             handle_illegal_instruction();
 
-      break;
-    case CAUSE_MISALIGNED_LOAD:
-      handle_misaligned_load();
-      break;
-    case CAUSE_MISALIGNED_STORE:
-      handle_misaligned_store();
-      break;
+            break;
+        case CAUSE_MISALIGNED_LOAD:
+            handle_misaligned_load();
+            break;
+        case CAUSE_MISALIGNED_STORE:
+            handle_misaligned_store();
+            break;
 
-    default:
-      sprint("machine trap(): unexpected mscause %p\n", mcause);
-      sprint("            mepc=%p mtval=%p\n", read_csr(mepc), read_csr(mtval));
-      panic( "unexpected exception happened in M-mode.\n" );
-      break;
-  }
+        default:
+            sprint("machine trap(): unexpected mscause %p\n", mcause);
+            sprint("            mepc=%p mtval=%p\n", read_csr(mepc), read_csr(mtval));
+            panic("unexpected exception happened in M-mode.\n");
+            break;
+    }
 }
