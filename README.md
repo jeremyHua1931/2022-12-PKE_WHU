@@ -1,11 +1,11 @@
-## about riscv-pke (Proxy Kernel for Education, a.k.a. PKE) ##
+## About riscv-pke (Proxy Kernel for Education, PKE for short) ##
 ----------
 
 Documents in Chinese can be found [here](https://gitee.com/hustos/pke-doc). There is still no dedicated documents in English yet, but the in-line comments in our codes as well as the self-explaining names for variables and functions will help on your journey of PKE.
 
-PKE is an open source project (see [LICENSE.txt](./LICENSE.txt) for license information) for the educational purpose of the Operating System Engineering/Computer System Engineering courses, given to undergraduate students majored in CS (Computer Science) or EECS ( Electrical Engineering and Computer Science) in universities.
+PKE is an open source project (see [LICENSE.txt](./LICENSE.txt) for license information) for the educational purpose of the Operating System Engineering course, given to undergraduate students majored in CS (Computer Science) or EECS ( Electrical Engineering and Computer Science) in universities.
 
-PKE provides a series of labs that cover the engineering-side knowledge points of the Operating System as well as some of Computer Organization/Architecture, including:
+PKE provides a series of labs that cover the engineering-side knowledge points of the Operating System, including:
 
 Lab1(3 basic labs+2 challenge labs): traps (syscalls), exceptions and interrupts (IRQs in Intel terminology).   
 
@@ -13,18 +13,20 @@ Lab2 (3 basic labs+2 challenge labs): memory management.
 
 Lab3 (3 basic labs+2 challenge labs): processes.
 
-Lab4 (3 basic labs): device and file (conducted on a PYNQ FPGA board + an Arduino toy car).
+Lab4 (3 basic labs): devices (tied with experiments on RISC-V on PYNQ).
+
+Lab5: file systems (not presented yet).
 
 The experiments in the REPO may be different (with more actual labs) from the above list with the passing of time.
 
-From the angle of education on Operating System Engineering, different from many famous OS educational projects (like [xv6](https://pdos.csail.mit.edu/6.828/2020/xv6.html) (JOS when earlier) used in MIT 6.828 and [ucore](https://github.com/oscourse-tsinghua/ucore-rv) taught in Tsinghua University) that use complete or near-complete OS kernels containing almost everything like process management, file systems and many other modules, *PKE is **NOT** a complete OS kernel (actually, PKE never intends to be one of them.)*. 
+Different from many famous OS educational projects (like [xv6](https://pdos.csail.mit.edu/6.828/2020/xv6.html) (JOS when earlier) used in MIT 6.828 and [ucore](https://github.com/oscourse-tsinghua/ucore-rv) taught in Tsinghua University) that use complete or near-complete OS kernels containing almost everything like process management, file systems and many other modules, *PKE is **NOT** a complete OS kernel (actually, PKE never intends to be one of them.)*.
 
 
 PKE is built around the idea of Proxy Kernel (proposed in [PK](https://github.com/riscv/riscv-pk), an open source project of the RISC-V software ecology), that emphasizes to construct a "just-enough" OS kernel for a given application. With such an idea, we design a series of labs in PKE that gradually "upgrades" the OS kernel by giving a set of applications, from simple to complex. During the upgradations, you can learn more and more sophisticated ideas of modern operating systems, and more importantly, play with them by following the labs, one after another. 
 
 
-In each lab, PKE starts with an application (placed in the *./user/* folder, with the "app_" prefix) and an *incomplete* proxy OS kernel. During the lab, you need to 1) understand the interaction between application and proxy OS kernel (sometimes, also the RISC-V machine emulated by using [Spike](https://github.com/riscv/riscv-isa-sim), or an FPGA board with a soft RISC-V core); 2) follow the code from the given application to the OS kernel based on the understanding; 3) complete the proxy OS kernel to make the application (or the system) to execute correctly and smoothly.       
-
+In each lab, PKE starts with an application (placed in the *./user/* folder, with the "app_" prefix) and an *incomplete* proxy OS kernel. During the lab, you need to 1) understand the interaction between applicaion and proxy OS kernel (sometimes, also the RISC-V machine emulated by using [Spike](https://github.com/riscv/riscv-isa-sim)); 2) follow the code from the given application to the OS kernel based on the understanding; 3) complete the proxy OS kernel to make the application (or the system) to execute correctly and smoothly.       
+    
 
 In the labs of PKE, we tried our best to control and minimize the code scale of each lab, hoping to help you to stay focus on the key components of Operating System, and minimize the efforts at the same time. [Contact us](mailto:zyshao@hust.edu.cn) if you have further suggestions on reducing the code scale, thanks in advance! 
 

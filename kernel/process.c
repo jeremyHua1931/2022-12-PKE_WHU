@@ -33,6 +33,12 @@ process procs[NPROC];
 process* current = NULL;
 
 // points to the first free page in our simple heap. added @lab2_2
+//   USER_FREE_ADDRESS_START ==> kernel/memlayout.h 查询知道  值为 #define USER_FREE_ADDRESS_START 0x00000000 + PGSIZE * 1024
+//#define PGSIZE 4096   riscv.h
+/*
+ * 在PKE操作系统内核中，应用程序执行过程中所动态分配（类似malloc）的内存是被映射到USER_FREE_ADDRESS_START（4MB）开始的地址的
+ *               0x400000
+ */
 uint64 g_ufree_page = USER_FREE_ADDRESS_START;
 
 //
