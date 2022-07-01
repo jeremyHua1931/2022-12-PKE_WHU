@@ -9,7 +9,7 @@
 // _end is defined in kernel/kernel.lds, it marks the ending (virtual) address of PKE kernel
 extern char _end[];
 // g_mem_size is defined in spike_interface/spike_memory.c, it indicates the size of our
-// (emulated) spike machine. g_mem_size's value is obtained when initializing HTIF. 
+// (emulated) spike machine.
 extern uint64 g_mem_size;
 
 static uint64 free_mem_start_addr;  //beginning address of free memory
@@ -23,8 +23,7 @@ typedef struct node {
 static list_node g_free_mem_list;
 
 //
-// actually creates the freepage list. each page occupies 4KB (PGSIZE), i.e., small page.
-// PGSIZE is defined in kernel/riscv.h, ROUNDUP is defined in util/functions.h.
+// actually creates the freepage list. each page occupies 4KB (PGSIZE)
 //
 static void create_freepage_list(uint64 start, uint64 end) {
   g_free_mem_list.next = 0;
@@ -72,7 +71,7 @@ void pmm_init() {
   // free memory starts from the end of PKE kernel and must be page-aligined
   free_mem_start_addr = ROUNDUP(g_kernel_end , PGSIZE);
 
-  // recompute g_mem_size to limit the physical memory space that our riscv-pke kernel
+  // recompute g_mem_size to limit the physical memory space that PKE kernel
   // needs to manage
   g_mem_size = MIN(PKE_MAX_ALLOWABLE_RAM, g_mem_size);
   if( g_mem_size < pke_kernel_size )
