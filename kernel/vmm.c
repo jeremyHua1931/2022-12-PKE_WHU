@@ -210,8 +210,19 @@ void user_vm_unmap(pagetable_t page_dir, uint64 va, uint64 size, int free) {
   // (use free_page() defined in pmm.c) the physical pages. lastly, invalidate the PTEs.
   // as naive_free reclaims only one page at a time, you only need to consider one page
   // to make user/app_naive_malloc to behave correctly.
-  panic( "You have to implement user_vm_unmap to free pages using naive_free in lab2_2.\n" );
+//  panic( "You have to implement user_vm_unmap to free pages using naive_free in lab2_2.\n" );
 
+//回收反应的流程
+/*
+ * 找到一个给定va所对应的页表项PTE（查找与页表操作相关的重要函数，看哪个函数能满足此需求）；
+ * ===>lookup_pa()查找逻辑地址va所在虚拟页面地址（即va将低12位置零）对应的物理页面地址。如果没有与va对应的物理页面，则返回NULL；否则，返回va对应的物理页面地址。
+ * 如果找到（过滤找不到的情形），通过该PTE的内容得知va所对应物理页的首地址pa；
+ * 回收pa对应的物理页，并将PTE中的Valid位置为0。 ===>use free_page() defined in pmm.c
+ */
+
+//查看页面操作函数
+    uint64 pa = lookup_pa(page_dir, va);
+    free_page((void *)pa);
 }
 
 
