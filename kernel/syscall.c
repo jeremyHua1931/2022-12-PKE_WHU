@@ -19,105 +19,126 @@
 //
 // implement the SYS_user_print syscall
 //
-ssize_t sys_user_print(const char *buf, size_t n)
-{
-  // buf is an address in user space on user stack,
-  // so we have to transfer it into phisical address (kernel is running in direct mapping).
-  assert(current);
-  char *pa = (char *)user_va_to_pa((pagetable_t)(current->pagetable), (void *)buf);
-  sprint(pa);
-  return 0;
+ssize_t sys_user_print(const char *buf, size_t n) {
+    // buf is an address in user space on user stack,
+    // so we have to transfer it into phisical address (kernel is running in direct mapping).
+    assert(current);
+    char *pa = (char *) user_va_to_pa((pagetable_t) (current->pagetable), (void *) buf);
+    sprint(pa);
+    return 0;
 }
 
 //
 // implement the SYS_user_exit syscall
 //
-ssize_t sys_user_exit(uint64 code)
-{
-  sprint("User exit with code:%d.\n", code);
-  // in lab3 now, we should reclaim the current process, and reschedule.
-  free_process(current);
-  schedule();
-  return 0;
+ssize_t sys_user_exit(uint64 code) {
+    sprint("User exit with code:%d.\n", code);
+    // in lab3 now, we should reclaim the current process, and reschedule.
+    free_process(current);
+    schedule();
+    return 0;
 }
 
 //
 // maybe, the simplest implementation of malloc in the world ...
 //
-uint64 sys_user_allocate_page()
-{
-  void *pa = alloc_page();
-  uint64 va = g_ufree_page;
-  g_ufree_page += PGSIZE;
-  user_vm_map((pagetable_t)current->pagetable, va, PGSIZE, (uint64)pa,
-              prot_to_type(PROT_WRITE | PROT_READ, 1));
+uint64 sys_user_allocate_page() {
+    void *pa = alloc_page();
+    uint64 va = g_ufree_page;
+    g_ufree_page += PGSIZE;
+    user_vm_map((pagetable_t) current->pagetable, va, PGSIZE, (uint64)
+    pa,
+            prot_to_type(PROT_WRITE | PROT_READ, 1));
 
-  return va;
+    return va;
 }
 
 //
 // reclaim a page, indicated by "va".
 //
-uint64 sys_user_free_page(uint64 va)
-{
-  user_vm_unmap((pagetable_t)current->pagetable, va, PGSIZE, 1);
-  return 0;
+uint64 sys_user_free_page(uint64 va) {
+    user_vm_unmap((pagetable_t) current->pagetable, va, PGSIZE, 1);
+    return 0;
 }
 
 //
 // kerenl entry point of naive_fork
 //
-ssize_t sys_user_fork()
-{
-  sprint("User call fork.\n");
-  return do_fork(current);
+ssize_t sys_user_fork() {
+    sprint("User call fork.\n");
+    return do_fork(current);
 }
 
 //
 // kerenl entry point of yield
 //
-ssize_t sys_user_yield()
-{
-  // TODO (lab3_2): implment the syscall of yield.
-  // hint: the functionality of yield is to give up the processor. therefore,
-  // we should set the status of currently running process to READY, insert it in
-  // the rear of ready queue, and finally, schedule a READY process to run.
+ssize_t sys_user_yield() {
+    // TODO (lab3_2): implment the syscall of yield.
+    // hint: the functionality of yield is to give up the processor. therefore,
+    // we should set the status of currently running process to READY, insert it in
+    // the rear of ready queue, and finally, schedule a READY process to run.
 
-  //可知yield()为系统调用，则需要修改的函数存在于syscall.c
-  // 已知进程释放CPU的动作应该是：
-  // 将当前进程置为就绪状态（READY）；
-  // 将当前进程加入到就绪队列的队尾；
-  // 转进程调度。
-  // 依次执行即可
-  current->status = READY;
-  insert_to_ready_queue(current);
-  schedule();
+    //可知yield()为系统调用，则需要修改的函数存在于syscall.c
+    // 已知进程释放CPU的动作应该是：
+    // 将当前进程置为就绪状态（READY）；
+    // 将当前进程加入到就绪队列的队尾；
+    // 转进程调度。
+    // 依次执行即可
+    current->status = READY;
+    insert_to_ready_queue(current);
+    schedule();
 
-  // panic( "You need to implement the yield syscall in lab3_2.\n" );
-  return 0;
+    // panic( "You need to implement the yield syscall in lab3_2.\n" );
+    return 0;
 }
+
+//
+// kernel entry point of sem_new
+//
+ssize_t sys_sem_new(int value) {
+    return alloc_sem(value);
+}
+
+//
+// kernel entry point of sem_P
+//
+ssize_t sys_sem_P(uint64 sem) {
+    return dec_sem(sem);
+}
+
+//
+// kernel entry point of sem_V
+//
+ssize_t sys_sem_V(uint64 sem) {
+    return inc_sem(sem);
+}
+
 
 //
 // [a0]: the syscall number; [a1] ... [a7]: arguments to the syscalls.
 // returns the code of success, (e.g., 0 means success, fail for otherwise)
 //
-long do_syscall(long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7)
-{
-  switch (a0)
-  {
-  case SYS_user_print:
-    return sys_user_print((const char *)a1, a2);
-  case SYS_user_exit:
-    return sys_user_exit(a1);
-  case SYS_user_allocate_page:
-    return sys_user_allocate_page();
-  case SYS_user_free_page:
-    return sys_user_free_page(a1);
-  case SYS_user_fork:
-    return sys_user_fork();
-  case SYS_user_yield:
-    return sys_user_yield();
-  default:
-    panic("Unknown syscall %ld \n", a0);
-  }
+long do_syscall(long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7) {
+    switch (a0) {
+        case SYS_user_print:
+            return sys_user_print((const char *) a1, a2);
+        case SYS_user_exit:
+            return sys_user_exit(a1);
+        case SYS_user_allocate_page:
+            return sys_user_allocate_page();
+        case SYS_user_free_page:
+            return sys_user_free_page(a1);
+        case SYS_user_fork:
+            return sys_user_fork();
+        case SYS_user_yield:
+            return sys_user_yield();
+        case SYS_sem_new:
+            return sys_sem_new(a1);
+        case SYS_sem_P:
+            return sys_sem_P(a1);
+        case SYS_sem_V:
+            return sys_sem_V(a1);
+        default:
+            panic("Unknown syscall %ld \n", a0);
+    }
 }

@@ -76,3 +76,20 @@ int fork() {
 void yield() {
   do_user_call(SYS_user_yield, 0, 0, 0, 0, 0, 0, 0);
 }
+
+//TODO(lab3_2_challenge):（4）实现信号量的申请、释放和增减操作函数：
+int sem_new(int value) {
+    return do_user_call(SYS_sem_new, value, 0, 0, 0, 0, 0, 0);
+}
+//
+// lib call to sem_P
+//
+int sem_P(int sem) {
+    return do_user_call(SYS_sem_P, sem, 0, 0, 0, 0, 0, 0);
+}
+//
+// lib call to sem_V
+//
+int sem_V(int sem) {
+    return do_user_call(SYS_sem_V, sem, 0, 0, 0, 0, 0, 0);
+}
