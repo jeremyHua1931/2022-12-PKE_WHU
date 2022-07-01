@@ -24,13 +24,6 @@ uint64 do_user_call(uint64 sysnum, uint64 a1, uint64 a2, uint64 a3, uint64 a4, u
       : "memory");
 
   return ret;
-  /* do_user_call执行 ecall 命令
-   * ==>ecall指令用于向运行时环境发出请求，如系统调用 ( Trap (即我们通常理解的“系统调用”或者“软件中断”，))
-   *    ecall指令的执行将根据a0寄存器中的值获得系统调用号，并使RISC-V转到S模式(因为pke操作系统内核启动时将所有的中断、异常、系统调用都代理给了S模式) 的trap处理入口执行
-   *    (S模式--次高特权级的监管者模式),
-   *    入口--(在kernel/strap_vector.S文件中定义) ：
-   */
-
 }
 
 //

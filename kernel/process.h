@@ -4,11 +4,6 @@
 #include "riscv.h"
 
 typedef struct trapframe {
-    /*
-     * 该结构除了记录进程上下文的RISC-V机器的通用寄存器组 (regs成员) 外，还包括很少
-的其他成员 (如指向内核态栈顶的kernel_sp，指向内核态trap处理函数入口的
-kernel_trap指针，进程执行的当前位置epc)
-     */
   // space to store context (all common registers)
   /* offset:0   */ riscv_regs regs;
 
@@ -19,11 +14,11 @@ kernel_trap指针，进程执行的当前位置epc)
   // saved user process counter
   /* offset:264 */ uint64 epc;
 
-  // kernel page table. added @lab2_1
+  //kernel page table
   /* offset:272 */ uint64 kernel_satp;
 }trapframe;
 
-// riscv-pke kernel supports at most 32 processes
+// PKE kernel supports at most 32 processes
 #define NPROC 32
 
 // possible status of a process
@@ -60,7 +55,7 @@ typedef struct process {
   // trapframe storing the context of a (User mode) process.
   trapframe* trapframe;
 
-  // points to a page that contains mapped_regions. below are added @lab3_1
+  // points to a page that contains mapped_regions
   mapped_region *mapped_info;
   // next free mapped region in mapped_info
   int total_mapped_region;
@@ -70,14 +65,13 @@ typedef struct process {
   // process status
   int status;
   // parent process
-  struct process_t *parent;
+  struct process *parent;
   // next queue element
-  struct process_t *queue_next;
+  struct process *queue_next;
 }process;
 
 // switch to run user app
 void switch_to(process*);
-
 // initialize process pool (the procs[] array)
 void init_proc_pool();
 // allocate an empty process, init its vm space. returns its pid
@@ -89,8 +83,7 @@ int do_fork(process* parent);
 
 // current running process
 extern process* current;
-
-// address of the first free page in our simple heap. added @lab2_2
+// virtual address of our simple heap
 extern uint64 g_ufree_page;
 
 #endif
