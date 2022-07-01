@@ -21,6 +21,8 @@
 extern char smode_trap_vector[];
 extern void return_to_user(trapframe *, uint64 satp);
 
+uint64 user_stack_bottom = 0x7ffff000 - 4096;
+
 // current points to the currently running user-mode application.
 process* current = NULL;
 
@@ -30,7 +32,6 @@ process* current = NULL;
 /*
  * 在PKE操作系统内核中，应用程序执行过程中所动态分配（类似malloc）的内存是被映射到USER_FREE_ADDRESS_START（4MB）开始的地址的
  *               0x400000
- * TODO:(lab2-2) 思考题: 对应用户代码段
  */
 uint64 g_ufree_page = USER_FREE_ADDRESS_START;
 
