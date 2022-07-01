@@ -16,6 +16,10 @@
 
 //
 // implement the SYS_user_print syscall
+//调用了 user_va_to_pa()
+//该函数最终在第26行通过调用sprint将结果输出，
+// 但是在输出前，需要将buf地址转换为物理地址传递给sprint，
+// 这一转换是通过user_va_to_pa()函数完成的。而user_va_to_pa()函数的定义在kernel/vmm.c文件中定义
 //
 ssize_t sys_user_print(const char* buf, size_t n) {
   // buf is now an address in user space of the given app's user stack,

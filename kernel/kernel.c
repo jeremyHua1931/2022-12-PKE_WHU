@@ -37,27 +37,46 @@ void enable_paging() {
 //
 void load_user_program(process *proc) {
   sprint("User application is loading.\n");
+  /*
+   * 分配一个物理页面，将其作为栈帧（trapframe），即发生中断时保存用户进程执行上下文的内存空间。
+   */
   // allocate a page to store the trapframe. alloc_page is defined in kernel/pmm.c. added @lab2_1
   proc->trapframe = (trapframe *)alloc_page();
   memset(proc->trapframe, 0, sizeof(trapframe));
 
+  /*
+   * 分配一个物理页面作为存放进程页表根目录（page directory，对应图4.1中的VPN[2]）的空间。
+   */
   // allocate a page to store page directory. added @lab2_1
   proc->pagetable = (pagetable_t)alloc_page();
   memset((void *)proc->pagetable, 0, PGSIZE);
+
+  /*
+   * 分配了一个物理页面，作为用户进程的内核态栈，该栈将在用户进程进入中断处理时用作S模式内核处理函数使用的栈。
+   */
 
   // allocate pages to both user-kernel stack and user app itself. added @lab2_1
   proc->kstack = (uint64)alloc_page() + PGSIZE;   //user kernel stack top
   uint64 user_stack = (uint64)alloc_page();       //phisical address of user stack bottom
 
+  /*
+   * 再次分配一个物理页面，作为用户进程的用户态栈，该栈供应用在用户模式下使用，并在第56--57行映射到用户进程的逻辑地址USER_STACK_TOP
+   */
   // USER_STACK_TOP = 0x7ffff000, defined in kernel/memlayout.h
   proc->trapframe->regs.sp = USER_STACK_TOP;  //virtual address of user stack top
 
   sprint("user frame 0x%lx, user stack 0x%lx, user kstack 0x%lx \n", proc->trapframe,
          proc->trapframe->regs.sp, proc->kstack);
 
+  /*
+   * 调用load_bincode_from_host_elf()函数，该函数将读取应用所对应的ELF文件，并将其中的代码段读取到新分配的内存空间
+   */
   // load_bincode_from_host_elf() is defined in kernel/elf.c
   load_bincode_from_host_elf(proc);
 
+  /*
+   * 将内核中的S态trap入口函数所在的物理页一一映射到用户进程的逻辑地址空间。
+   */
   // populate the page table of user application. added @lab2_1
   // map user stack in userspace, user_vm_map is defined in kernel/vmm.c
   user_vm_map((pagetable_t)proc->pagetable, USER_STACK_TOP - PGSIZE, PGSIZE, user_stack,
