@@ -42,6 +42,11 @@ uint64 prot_to_type(int prot, int user) {
   if (user) perm |= PTE_U;
   return perm;
 }
+/*
+ * 该函数的第一个输入参数page_dir为根目录所在物理页面的首地址，第二个参数va为所要查找（walk）的逻辑地址，第三个参数实际上是一个bool类型：
+ * 当它为1时，如果它所要查找的逻辑地址并未建立与物理地址的映射（图4.1中的Page Medium Directory）不存在，则通过分配内存空间建立从根目录到页表的完整映射，
+ * 并最终返回va所对应的页表项；当它为0时，如果它所要查找的逻辑地址并未建立与物理地址的映射，则返回NULL，否则返回va所对应的页表项。
+ */
 
 //
 // traverse the page table (starting from page_dir) to find the corresponding pte of va.
@@ -82,6 +87,9 @@ pte_t *page_walk(pagetable_t page_dir, uint64 va, int alloc) {
   return pt + PX(0, va);
 }
 
+/*
+ * 查找逻辑地址va所在虚拟页面地址（即va将低12位置零）对应的物理页面地址。如果没有与va对应的物理页面，则返回NULL；否则，返回va对应的物理页面地址。
+ */
 //
 // look up a virtual page address, return the physical page address or 0 if not mapped.
 //
@@ -106,6 +114,11 @@ extern char _etext[];
 // pointer to kernel page director
 pagetable_t g_kernel_pagetable;
 
+/*
+ * 该函数的第一个输入参数page_dir为根目录所在物理页面的首地址，第二个参数va则是将要被映射的逻辑地址，
+ * 第三个参数size为所要建立映射的区间的长度，第四个参数pa为逻辑地址va所要被映射到的物理地址首地址，
+ * 最后（第五个）的参数perm为映射建立后页面访问的权限。总的来说，该函数将在给定的page_dir所指向的根目录中，建立[va，va+size]到[pa，pa+size]的映射。
+ */
 //
 // maps virtual address [va, va+sz] to [pa, pa+sz] (for kernel).
 //
@@ -151,7 +164,8 @@ void kern_vm_init(void) {
 //
 void *user_va_to_pa(pagetable_t page_dir, void *va) {
   // TODO (lab2_1): implement user_va_to_pa to convert a given user virtual address "va"
-  // to its corresponding physical address, i.e., "pa". To do it, we need to walk
+  // to its corresponding physical address, i.e., "pa". To do it,
+  // 第一步: we need to walk
   // through the page table, starting from its directory "page_dir", to locate the PTE
   // that maps "va". If found, returns the "pa" by using:
   // pa = PYHS_ADDR(PTE) + (va & (1<<PGSHIFT -1))
@@ -159,7 +173,19 @@ void *user_va_to_pa(pagetable_t page_dir, void *va) {
   // (va & (1<<PGSHIFT -1)) means computing the offset of "va" inside its page.
   // Also, it is possible that "va" is not mapped at all. in such case, we can find
   // invalid PTE, and should return NULL.
-  panic( "You have to implement user_va_to_pa (convert user va to pa) to print messages in lab2_1.\n" );
+//  panic( "You have to implement user_va_to_pa (convert user va to pa) to print messages in lab2_1.\n" );
+/*
+ * 为了在page_dir所指向的页表中查找逻辑地址va，就必须通过调用页表操作相关函数找到包含va的页表项（PTE），
+ * 通过该PTE的内容得知va所在的物理页面的首地址，最后再通过计算va在页内的位移得到va最终对应的物理地址。
+ */
+    //调用page_walik()函数 分配内存空间建立从根目录到页表的完整映射,同时要判断是否为空!!
+    pte_t *pte = page_walk(page_dir, (uint64)va, 0);
+    if (pte == NULL) {
+        return NULL;
+    }else{
+        uint64 pa=PTE2PA(*pte) + ((uint64)va & ((1 << PGSHIFT) - 1));
+        return (void*)pa;
+    }
 
 }
 
@@ -187,3 +213,5 @@ void user_vm_unmap(pagetable_t page_dir, uint64 va, uint64 size, int free) {
   panic( "You have to implement user_vm_unmap to free pages using naive_free in lab2_2.\n" );
 
 }
+
+
