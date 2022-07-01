@@ -1,16 +1,16 @@
 #
-# _mentry is the entry point of riscv-pke OS kernel.
+# _mentry is the entry point of our PKE OS kernel.
 #
 # !Important (for your understanding)
 # Before entering _mentry, two argument registers, i.e., a0(x10) and a1(x11), are set by
-# our emulator (i.e., spike).
+# our emulator (i.e., Spike).
 # [a0] = processor ID  (in the context of RISC-V, a processor is called as a HART, i.e.,
 # Hardware Thread).
 # [a1] = pointer to the DTS (i.e., Device Tree String), which is stored in the memory of
-# RISC-V guest computer emulated by spike.
+# RISC-V guest computer.
 #
 
-.globl _mentry
+  .globl _mentry
 _mentry:
     # [mscratch] = 0; mscratch points the stack bottom of machine mode computer
     csrw mscratch, x0
@@ -26,3 +26,4 @@ _mentry:
 
     # jump to mstart(), i.e., machine state start function in kernel/machine/minit.c
     call m_start
+
