@@ -20,7 +20,6 @@
 
 // Two functions defined in kernel/usertrap.S
 extern char smode_trap_vector[];
-
 extern void return_to_user(trapframe *, uint64 satp);
 
 //
@@ -41,133 +40,128 @@ uint64 g_ufree_page = USER_FREE_ADDRESS_START;
 //
 // switch to a user-mode process
 //
-void switch_to(process *proc) {
-    assert(proc);
-    current = proc;
+void switch_to(process *proc)
+{
+  assert(proc);
+  current = proc;
 
-    write_csr(stvec, (uint64)smode_trap_vector);
-    // set up trapframe values that smode_trap_vector will need when
-    // the process next re-enters the kernel.
-    proc->trapframe->kernel_sp = proc->kstack;     // process's kernel stack
-    proc->trapframe->kernel_satp = read_csr(satp); // kernel page table
-    proc->trapframe->kernel_trap = (uint64)
-    smode_trap_handler;
+  write_csr(stvec, (uint64)smode_trap_vector);
+  // set up trapframe values that smode_trap_vector will need when
+  // the process next re-enters the kernel.
+  proc->trapframe->kernel_sp = proc->kstack;     // process's kernel stack
+  proc->trapframe->kernel_satp = read_csr(satp); // kernel page table
+  proc->trapframe->kernel_trap = (uint64)smode_trap_handler;
 
-    // set up the registers that strap_vector.S's sret will use
-    // to get to user space.
+  // set up the registers that strap_vector.S's sret will use
+  // to get to user space.
 
-    // set S Previous Privilege mode to User.
-    unsigned long x = read_csr(sstatus);
-    x &= ~SSTATUS_SPP; // clear SPP to 0 for user mode
-    x |= SSTATUS_SPIE; // enable interrupts in user mode
+  // set S Previous Privilege mode to User.
+  unsigned long x = read_csr(sstatus);
+  x &= ~SSTATUS_SPP; // clear SPP to 0 for user mode
+  x |= SSTATUS_SPIE; // enable interrupts in user mode
 
-    write_csr(sstatus, x);
+  write_csr(sstatus, x);
 
-    // set S Exception Program Counter to the saved user pc.
-    write_csr(sepc, proc->trapframe->epc);
+  // set S Exception Program Counter to the saved user pc.
+  write_csr(sepc, proc->trapframe->epc);
 
-    // make user page table
-    uint64
-    user_satp = MAKE_SATP(proc->pagetable);
+  // make user page table
+  uint64 user_satp = MAKE_SATP(proc->pagetable);
 
-    // switch to user mode with sret.
-    return_to_user(proc->trapframe, user_satp);
+  // switch to user mode with sret.
+  return_to_user(proc->trapframe, user_satp);
 }
 
 //
 // initialize process pool (the procs[] array)
 //
-void init_proc_pool() {
-    memset(procs, 0, sizeof(struct process) * NPROC);
+void init_proc_pool()
+{
+  memset(procs, 0, sizeof(struct process) * NPROC);
 
-    for (int i = 0; i < NPROC; ++i) {
-        procs[i].status = FREE;
-        procs[i].pid = i;
-    }
+  for (int i = 0; i < NPROC; ++i)
+  {
+    procs[i].status = FREE;
+    procs[i].pid = i;
+  }
 }
 
 //
 // allocate an empty process, init its vm space. returns its pid
 //
-process *alloc_process() {
-    // locate the first usable process structure
-    int i;
+process *alloc_process()
+{
+  // locate the first usable process structure
+  int i;
 
-    for (i = 0; i < NPROC; i++)
-        if (procs[i].status == FREE)
-            break;
+  for (i = 0; i < NPROC; i++)
+    if (procs[i].status == FREE)
+      break;
 
-    if (i >= NPROC) {
-        panic("cannot find any free process structure.\n");
-        return 0;
-    }
+  if (i >= NPROC)
+  {
+    panic("cannot find any free process structure.\n");
+    return 0;
+  }
 
-    // init proc[i]'s vm space
-    procs[i].trapframe = (trapframe *) alloc_page(); // trapframe, used to save context
-    memset(procs[i].trapframe, 0, sizeof(trapframe));
+  // init proc[i]'s vm space
+  procs[i].trapframe = (trapframe *)alloc_page(); // trapframe, used to save context
+  memset(procs[i].trapframe, 0, sizeof(trapframe));
 
-    // page directory
-    procs[i].pagetable = (pagetable_t) alloc_page();
-    memset((void *) procs[i].pagetable, 0, PGSIZE);
+  // page directory
+  procs[i].pagetable = (pagetable_t)alloc_page();
+  memset((void *)procs[i].pagetable, 0, PGSIZE);
 
-    procs[i].kstack = (uint64)
-    alloc_page() + PGSIZE; // user kernel stack top
-    uint64
-    user_stack = (uint64)
-    alloc_page();        // phisical address of user stack bottom
-    procs[i].trapframe->regs.sp = USER_STACK_TOP;    // virtual address of user stack top
+  procs[i].kstack = (uint64)alloc_page() + PGSIZE; // user kernel stack top
+  uint64 user_stack = (uint64)alloc_page();        // phisical address of user stack bottom
+  procs[i].trapframe->regs.sp = USER_STACK_TOP;    // virtual address of user stack top
 
-    // allocates a page to record memory regions (segments)
-    procs[i].mapped_info = (mapped_region *) alloc_page();
-    memset(procs[i].mapped_info, 0, PGSIZE);
+  // allocates a page to record memory regions (segments)
+  procs[i].mapped_info = (mapped_region *)alloc_page();
+  memset(procs[i].mapped_info, 0, PGSIZE);
 
-    // map user stack in userspace
-    user_vm_map((pagetable_t) procs[i].pagetable, USER_STACK_TOP - PGSIZE, PGSIZE,
-                user_stack, prot_to_type(PROT_WRITE | PROT_READ, 1));
-    procs[i].mapped_info[0].va = USER_STACK_TOP - PGSIZE;
-    procs[i].mapped_info[0].npages = 1;
-    procs[i].mapped_info[0].seg_type = STACK_SEGMENT;
+  // map user stack in userspace
+  user_vm_map((pagetable_t)procs[i].pagetable, USER_STACK_TOP - PGSIZE, PGSIZE,
+              user_stack, prot_to_type(PROT_WRITE | PROT_READ, 1));
+  procs[i].mapped_info[0].va = USER_STACK_TOP - PGSIZE;
+  procs[i].mapped_info[0].npages = 1;
+  procs[i].mapped_info[0].seg_type = STACK_SEGMENT;
 
-    // map trapframe in user space (direct mapping as in kernel space).
-    user_vm_map((pagetable_t) procs[i].pagetable, (uint64)
-    procs[i].trapframe, PGSIZE,
-            (uint64)
-    procs[i].trapframe, prot_to_type(PROT_WRITE | PROT_READ, 0));
-    procs[i].mapped_info[1].va = (uint64)
-    procs[i].trapframe;
-    procs[i].mapped_info[1].npages = 1;
-    procs[i].mapped_info[1].seg_type = CONTEXT_SEGMENT;
+  // map trapframe in user space (direct mapping as in kernel space).
+  user_vm_map((pagetable_t)procs[i].pagetable, (uint64)procs[i].trapframe, PGSIZE,
+              (uint64)procs[i].trapframe, prot_to_type(PROT_WRITE | PROT_READ, 0));
+  procs[i].mapped_info[1].va = (uint64)procs[i].trapframe;
+  procs[i].mapped_info[1].npages = 1;
+  procs[i].mapped_info[1].seg_type = CONTEXT_SEGMENT;
 
-    // map S-mode trap vector section in user space (direct mapping as in kernel space)
-    // we assume that the size of usertrap.S is smaller than a page.
-    user_vm_map((pagetable_t) procs[i].pagetable, (uint64)
-    trap_sec_start, PGSIZE,
-            (uint64)
-    trap_sec_start, prot_to_type(PROT_READ | PROT_EXEC, 0));
-    procs[i].mapped_info[2].va = (uint64)
-    trap_sec_start;
-    procs[i].mapped_info[2].npages = 1;
-    procs[i].mapped_info[2].seg_type = SYSTEM_SEGMENT;
+  // map S-mode trap vector section in user space (direct mapping as in kernel space)
+  // we assume that the size of usertrap.S is smaller than a page.
+  user_vm_map((pagetable_t)procs[i].pagetable, (uint64)trap_sec_start, PGSIZE,
+              (uint64)trap_sec_start, prot_to_type(PROT_READ | PROT_EXEC, 0));
+  procs[i].mapped_info[2].va = (uint64)trap_sec_start;
+  procs[i].mapped_info[2].npages = 1;
+  procs[i].mapped_info[2].seg_type = SYSTEM_SEGMENT;
 
-    sprint("in alloc_proc. user frame 0x%lx, user stack 0x%lx, user kstack 0x%lx \n",
-           procs[i].trapframe, procs[i].trapframe->regs.sp, procs[i].kstack);
+  sprint("in alloc_proc. user frame 0x%lx, user stack 0x%lx, user kstack 0x%lx \n",
+         procs[i].trapframe, procs[i].trapframe->regs.sp, procs[i].kstack);
 
-    procs[i].total_mapped_region = 3;
-    // return after initialization.
-    return &procs[i];
+  procs[i].total_mapped_region = 3;
+  // return after initialization.
+  return &procs[i];
 }
 
 //
 // reclaim a process
 //
-int free_process(process *proc) {
-    // we set the status to ZOMBIE, but cannot destruct its vm space immediately.
-    // since proc can be current process, and its user kernel stack is currently in use!
-    // but for proxy kernel, it (memory leaking) may NOT be a really serious issue,
-    // as it is different from regular OS, which needs to run 7x24.
-    proc->status = ZOMBIE;
+int free_process(process *proc)
+{
+  // we set the status to ZOMBIE, but cannot destruct its vm space immediately.
+  // since proc can be current process, and its user kernel stack is currently in use!
+  // but for proxy kernel, it (memory leaking) may NOT be a really serious issue,
+  // as it is different from regular OS, which needs to run 7x24.
+  proc->status = ZOMBIE;
 
-    return 0;
+  return 0;
 }
 
 //
@@ -177,62 +171,58 @@ int free_process(process *proc) {
 // segments (code, system) of the parent to child. the stack segment remains unchanged
 // for the child.
 //
-int do_fork(process *parent) {
-    sprint("will fork a child from parent %d.\n", parent->pid);
-    process *child = alloc_process();
+int do_fork(process *parent)
+{
+  sprint("will fork a child from parent %d.\n", parent->pid);
+  process *child = alloc_process();
 
-    for (int i = 0; i < parent->total_mapped_region; i++) {
-        // browse parent's vm space, and copy its trapframe and data segments,
-        // map its code segment.
-        switch (parent->mapped_info[i].seg_type) {
-            case CONTEXT_SEGMENT:
-                *child->trapframe = *parent->trapframe;
-                break;
-            case STACK_SEGMENT:
-                memcpy((void *) lookup_pa(child->pagetable, child->mapped_info[0].va),
-                       (void *) lookup_pa(parent->pagetable, parent->mapped_info[i].va), PGSIZE);
-                break;
-            case CODE_SEGMENT: {
-                // TODO (lab3_1): implment the mapping of child code segment to parent's
-                // code segment.
-                // hint: the virtual address mapping of code segment is tracked in mapped_info
-                // page of parent's process structure. use the information in mapped_info to
-                // retrieve the virtual to physical mapping of code segment.
-                // after having the mapping information, just map the corresponding virtual
-                // address region of child to the physical pages that actually store the code
-                // segment of parent process.
-                // DO NOT COPY THE PHYSICAL PAGES, JUST MAP THEM.
-//                panic("You need to implement the code segment mapping of child in lab3_1.\n");
-                /*
-                 * do_fork()函数采用了简单复制的办法来拷贝父进程的这两个段到子进程中，这样做的目的是将父进程的执行现场传递给子进程
-                 *
-                 * 对于代码段，我们不应直接复制（减少系统开销），而应通过映射的办法，将子进程中对应的逻辑地址空间映射到其父进程中装载代码段的物理页面。
-                 * 这里，就要回到lab2内存管理部分，寻找合适的函数来实现了。注意对页面的权限设置（可读可执行）。
-                 */
-                //1-取得parent的代码段的物理地址，其虚拟地址存储在mapped_info[i].va
-                uint64 pa = lookup_pa(parent->pagetable, parent->mapped_info[i].va);
-                if (pa) {
-                    //2-若存在，则将child的代码段映射到parent的代码段上
-                    user_vm_map(child->pagetable, parent->mapped_info[i].va, PGSIZE, pa,
-                                prot_to_type(PROT_WRITE | PROT_READ | PROT_EXEC, 1));
-                }
+  for (int i = 0; i < parent->total_mapped_region; i++)
+  {
+    // browse parent's vm space, and copy its trapframe and data segments,
+    // map its code segment.
+    switch (parent->mapped_info[i].seg_type)
+    {
+    case CONTEXT_SEGMENT:
+      *child->trapframe = *parent->trapframe;
+      break;
+    case STACK_SEGMENT:
+      memcpy((void *)lookup_pa(child->pagetable, child->mapped_info[0].va),
+             (void *)lookup_pa(parent->pagetable, parent->mapped_info[i].va), PGSIZE);
+      break;
+    case CODE_SEGMENT:{
+      // TODO (lab3_1): implment the mapping of child code segment to parent's
+      // code segment.
+      // hint: the virtual address mapping of code segment is tracked in mapped_info
+      // page of parent's process structure. use the information in mapped_info to
+      // retrieve the virtual to physical mapping of code segment.
+      // after having the mapping information, just map the corresponding virtual
+      // address region of child to the physical pages that actually store the code
+      // segment of parent process.
+      // DO NOT COPY THE PHYSICAL PAGES, JUST MAP THEM.
 
+      //取得parent的代码段的物理地址，其虚拟地址存储在mapped_info[i].va
+      uint64 pa = lookup_pa(parent->pagetable, parent->mapped_info[i].va);
+      if (pa)
+      {
+        //若存在，则将child的代码段映射到parent的代码段上
+        user_vm_map(child->pagetable, parent->mapped_info[i].va, PGSIZE, pa, prot_to_type(PROT_WRITE | PROT_READ | PROT_EXEC, 1));
+      }
+      // panic("You need to implement the code segment mapping of child in lab3_1.\n");
 
-                // after mapping, register the vm region (do not delete codes below!)
-                child->mapped_info[child->total_mapped_region].va = parent->mapped_info[i].va;
-                child->mapped_info[child->total_mapped_region].npages =
-                        parent->mapped_info[i].npages;
-                child->mapped_info[child->total_mapped_region].seg_type = CODE_SEGMENT;
-                child->total_mapped_region++;
-                break;
-            }
-        }
+      // after mapping, register the vm region (do not delete codes below!)
+      child->mapped_info[child->total_mapped_region].va = parent->mapped_info[i].va;
+      child->mapped_info[child->total_mapped_region].npages =
+          parent->mapped_info[i].npages;
+      child->mapped_info[child->total_mapped_region].seg_type = CODE_SEGMENT;
+      child->total_mapped_region++;
+      break;}
     }
+  }
 
-    child->status = READY;
-    child->trapframe->regs.a0 = 0;
-    child->parent = parent;
-    insert_to_ready_queue(child);
+  child->status = READY;
+  child->trapframe->regs.a0 = 0;
+  child->parent = parent;
+  insert_to_ready_queue(child);
 
-    return child->pid;
+  return child->pid;
 }
