@@ -30,7 +30,6 @@ process* current = NULL;
 /*
  * 在PKE操作系统内核中，应用程序执行过程中所动态分配（类似malloc）的内存是被映射到USER_FREE_ADDRESS_START（4MB）开始的地址的
  *               0x400000
- * TODO:(lab2-2) 思考题: 对应用户代码段
  */
 uint64 g_ufree_page = USER_FREE_ADDRESS_START;
 
